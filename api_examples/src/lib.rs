@@ -11,7 +11,9 @@ extern crate kdbplus;
 use kdbplus::api::native::*;
 use kdbplus::api::*;
 use kdbplus::{qattribute, qinf_base, qninf_base, qnull_base, qtype};
+#[cfg(unix)]
 use libc::{pipe, send};
+#[cfg(unix)]
 use std::ffi::c_void;
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -695,6 +697,7 @@ pub extern "C" fn reveal(bytes: K) -> K {
 
 /// Callback function to send asynchronous query to a q process which sent a query to the
 ///  caller of this function.
+#[cfg(unix)]
 extern "C" fn counter(socket: I) -> K {
     let extra_query = "show `$\"Counter_punch!!\"".as_bytes();
     let query_length = extra_query.len();
@@ -726,6 +729,7 @@ extern "C" fn counter(socket: I) -> K {
 
 /// Example of `sd1`.
 #[no_mangle]
+#[cfg(unix)]
 pub extern "C" fn enable_counter(socket: K) -> K {
     unsafe {
         let result = sd1(socket.get_int().expect("oh no"), counter);
@@ -1046,10 +1050,11 @@ pub extern "C" fn satisfy_5000_men(apple: K) -> K {
 }
 
 // %% Callback %%//vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv/
-
+#[cfg(unix)]
 static mut PIPE: [I; 2] = [-1, -1];
 
 // Callback for some message queue.
+#[allow(dead_code)]
 extern "C" fn callback(socket: I) -> K {
     let mut buffer: [K; 1] = [0 as K];
     unsafe { libc::read(socket, buffer.as_mut_ptr() as *mut V, 8) };
@@ -1063,6 +1068,7 @@ extern "C" fn callback(socket: I) -> K {
 }
 
 #[no_mangle]
+#[cfg(unix)]
 pub extern "C" fn plumber(_: K) -> K {
     if 0 != unsafe { pipe(PIPE.as_mut_ptr()) } {
         return new_error("Failed to create pipe\0");
